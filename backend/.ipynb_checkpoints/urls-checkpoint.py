@@ -18,8 +18,6 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from backend_app import views
-from django.conf.urls.static import static
-from django.conf import settings
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -32,7 +30,6 @@ urlpatterns = [
     path('api/get-supervisor-data/', views.get_supervisor_data, name='get-supervisor-data'),
     path('api/get-company-data/', views.get_company_data, name='get-company-data'),
     path('ver/email/', views.receive_verify_email, name='verify-email'),
-    path('reg/email/', views.receive_registration_email, name='regisration-email'),
     path('sup/profile-data/', views.recieve_sup_profile, name='recieve_sup_data'),
     path('quiz-data/user-test/', views.quiz_data, name='quiz_data'),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]

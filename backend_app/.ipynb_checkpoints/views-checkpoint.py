@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-from backend_app.models import Signup_data, Student_db, Supervisor_db, Client_db
+from backend_app.models import Signup_data, Student_data, Supervisor_data, Company_data
 from django.http import HttpResponse
 import random
 import string
@@ -12,7 +12,6 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import requests
-
 
 @csrf_exempt
 def receive_signup_data(request):
@@ -34,83 +33,72 @@ def receive_signup_data(request):
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
 
-
 @csrf_exempt
 def receive_student_data(request):
     if request.method == 'POST':
         try:
-            data = request.POST
-            profile = request.FILES.get('profile') 
-            student_data = Student_db(
+            data = json.loads(request.body)
+            print(data)
+            student_data = Student_data(
+                email=data['email'], 
                 username=data['username'],
                 cnic=data['cnic'],
+                profile=data['profile'],
                 phone=data['phone'],
+                skills=data['skills'],
                 description=data['description'],
-                profile=profile,
-                degree=data['degree'],
-                major=data['major'],
-                semester=data['semester'],
                 institute=data['institute'],
-                email=data['email'],
-                university_email=data['university_email'],
-                skills=data['skills'] 
+                inst_email=data['inst_email'],
             )
             student_data.save()
-
             return JsonResponse({'status': 'success', 'data_received': student_data.id})
         except Exception as e:
             print(f"Error: {e}")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
 
-
-
 @csrf_exempt
 def receive_supervisor_data(request):
     if request.method == 'POST':
         try:
-            data = request.POST
-            profile = request.FILES.get('profile')
-            supervisor_data = Supervisor_db(
+            data = json.loads(request.body)
+            print(data)
+            supervisor_data = Supervisor_data(
+                email=data['email'], 
                 username=data['username'],
+                profile=data['profile'],
                 cnic=data['cnic'],
                 phone=data['phone'],
+                skills=data['skills'],
                 description=data['description'],
-                profile=profile,
-                designation=data['designation'],
-                department=data['department'],
-                email=data['email'],
                 institute=data['institute'],
-                university_email=data['university_email'],
-                skills=data['skills']
+                inst_email=data['inst_email'],
+                designation=data['designation'],
             )
             supervisor_data.save()
-
             return JsonResponse({'status': 'success', 'data_received': supervisor_data.id})
         except Exception as e:
             print(f"Error: {e}")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
 
-
-
 @csrf_exempt
 def receive_company_data(request):
     if request.method == 'POST':
         try:
-            data = request.POST
-            profile = request.FILES.get('profile')
-
-            company_data = Client_db(
+            data = json.loads(request.body)
+            print(data)
+            company_data = Company_data(
+                email=data['email'], 
                 username=data['username'],
                 cnic=data['cnic'],
                 phone=data['phone'],
+                join_as=data['join_as'],
                 description=data['description'],
-                profile=profile,
-                joiningType=data['joiningType'],
-                email=data['email'],
-                organizationName=data['organizationName'],
-                organizationEmail=data['organizationEmail']
+                profile=data['profile'],
+                org_name=data['org_name'],
+                org_website=data['org_website'],
+                location=data['location'],
             )
             company_data.save()
             return JsonResponse({'status': 'success', 'data_received': company_data.id})
@@ -118,7 +106,6 @@ def receive_company_data(request):
             print(f"Error: {e}")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
-
 
 
 def get_signup_data(request):
@@ -131,39 +118,35 @@ def get_signup_data(request):
         return JsonResponse({'status': 'success', 'data': persons_data})
     return JsonResponse({'status': 'error', 'message': 'Only GET method is allowed'})
 
-
 def get_student_data(request):
     if request.method == 'GET':
-        persons = Student_db.objects.all()
+        persons = Student_data.objects.all()
         persons_data = [
-            {"username": person.username, "cnic": person.cnic, "phone": person.phone, "description": person.description, "profile": person.profile.name, "degree": person.degree, "major": person.major, "semester": person.semester, "institute": person.institute, "email": person.email, "university_email": person.university_email, "skills": person.skills}
+            {"email": person.email, "username": person.username, "cnic": person.cnic, "phone": person.phone, "skills": person.skills, "description": person.description, "institute": person.institute, "inst_email": person.inst_email}
             for person in persons
         ]
         return JsonResponse({'status': 'success', 'data': persons_data})
     return JsonResponse({'status': 'error', 'message': 'Only GET method is allowed'})
-
 
 def get_supervisor_data(request):
     if request.method == 'GET':
-        persons = Supervisor_db.objects.all()
+        persons = Supervisor_data.objects.all()
         persons_data = [
-            {"username": person.username, "cnic": person.cnic, "phone": person.phone, "description": person.description, "profile": person.profile.name, "designation": person.designation, "department": person.department, "email": person.email, "institute": person.institute, "university_email": person.university_email, "skills": person.skills}
+            {"email": person.email, "username": person.username, "cnic": person.cnic, "phone": person.phone, "skills": person.skills, "description": person.description, "institute": person.institute, "inst_email": person.inst_email, "designation": person.designation}
             for person in persons
         ]
         return JsonResponse({'status': 'success', 'data': persons_data})
     return JsonResponse({'status': 'error', 'message': 'Only GET method is allowed'})
-
 
 def get_company_data(request):
     if request.method == 'GET':
-        persons = Client_db.objects.all()
+        persons = Company_data.objects.all()
         persons_data = [
-            {"username": person.username, "cnic": person.cnic, "phone": person.phone, "description": person.description, "profile": person.profile.name, "joiningType": person.joiningType, "email": person.email, "organizationName": person.organizationName, "organizationEmail": person.organizationEmail}
+            {"email": person.email, "username": person.username, "cnic": person.cnic, "phone": person.phone, "description": person.description, "org_name": person.org_name, "org_email": person.org_email, "location": person.location}
             for person in persons
         ]
         return JsonResponse({'status': 'success', 'data': persons_data})
     return JsonResponse({'status': 'error', 'message': 'Only GET method is allowed'})
-
 
 @csrf_exempt
 def receive_verify_email(request):
@@ -182,44 +165,6 @@ def receive_verify_email(request):
             msg = f'Subject: {subject}\n\n{body}'
             smtp.sendmail('worknconnect.wnc@gmail.com', ver_email, msg)
     return JsonResponse({'status': 'success', 'code': code})
-
-
-@csrf_exempt
-def receive_registration_email(request):
-    if request.method == 'POST':
-        try:
-            email = json.loads(request.body)
-            print(email)
-            subject = 'Registration Successful'
-            body = (
-                "Hello,\n\n"
-                "Congratulations! Your registration with WorknConnect has been successfully completed.\n\n"
-                "We are thrilled to have you as a part of our growing community. Your account is now active! "
-                "We’ll keep you updated with the latest news and developments at WorknConnect. "
-                "Stay tuned as more features become available soon!\n\n"
-                "If you have any questions or need assistance, feel free to reach out to our support team at "
-                "support@worknconnect.com.\n\n"
-                "Thank you for joining us on this journey. Together, we can build something remarkable!\n\n"
-                "Best regards,\nThe WorknConnect Team"
-            )
-            msg = MIMEText(body, 'plain', 'utf-8')
-            msg['Subject'] = subject
-            msg['From'] = 'no-reply@worknconnect.com'
-            msg['To'] = email
-            with smtplib.SMTP('smtp.hostinger.com', 587) as smtp:
-                smtp.set_debuglevel(1)
-                smtp.ehlo()
-                smtp.starttls()
-                smtp.ehlo()
-                smtp.login('no-reply@worknconnect.com', 'Sherlocked21239@')
-                smtp.sendmail('no-reply@worknconnect.com', email, msg.as_string())
-            return JsonResponse({'status': 'success', 'registration': 'verified'})
-        except smtplib.SMTPException as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
-
 
 @csrf_exempt
 def recieve_sup_profile(request):
@@ -252,7 +197,6 @@ def recieve_sup_profile(request):
             print(f"Error: {e}")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
-
 
 def quiz_data(request):
     if request.method == 'GET':
@@ -460,163 +404,5 @@ def quiz_data(request):
                 'correct':1
             },
         ]
-        frontend_development = [
-            {
-                'question': 'Which of the following is NOT a frontend framework or library?',
-                'answers': ['React', 'Vue', 'Angular', 'Django'],
-                'correct': 3
-            },
-            {
-                'question': 'What is the purpose of the CSS `z-index` property?',
-                'answers': ['To define the stacking order of elements', 'To set the transparency of an element', 'To align content horizontally', 'To manage animations'],
-                'correct': 0
-            },
-            {
-                'question': 'Which of the following is used to apply styles directly to an HTML element?',
-                'answers': ['CSS classes', 'CSS IDs', 'Inline styles', 'External stylesheets'],
-                'correct': 2
-            },
-            {
-                'question': 'What does the term "responsive design" mean?',
-                'answers': ['Designs that adapt to user preferences', 'Designs that work across different devices and screen sizes', 'Designs with fast loading times', 'Designs with adaptive animations'],
-                'correct': 1
-            },
-            {
-                'question': 'Which CSS property is used to create animations?',
-                'answers': ['animation', 'transition', 'transform', 'keyframes'],
-                'correct': 0
-            },
-            {
-                'question': 'In JavaScript, what does `event.preventDefault()` do?',
-                'answers': ['Prevents an event from bubbling up', 'Prevents the default action of an event', 'Prevents an event from being triggered', 'Prevents memory leaks'],
-                'correct': 1
-            },
-            {
-                'question': 'Which of the following is used to optimize images for faster loading in frontend development?',
-                'answers': ['SVG', 'WebP', 'PNG', 'JPG'],
-                'correct': 1
-            },
-            {
-                'question': 'What is the purpose of a virtual DOM in React?',
-                'answers': ['To directly update the real DOM', 'To improve performance by minimizing direct DOM manipulations', 'To store application data', 'To bind events'],
-                'correct': 1
-            },
-            {
-                'question': 'Which of the following is a JavaScript package manager?',
-                'answers': ['Node.js', 'Webpack', 'npm', 'React'],
-                'correct': 2
-            },
-            {
-                'question': 'Which HTML5 feature is used to store data in the browser without cookies?',
-                'answers': ['Web Storage', 'Session Cookies', 'IndexedDB', 'Cache API'],
-                'correct': 0
-            },
-        ]
-        backend_development = [
-            {
-                'question': 'Which of the following is a backend programming language?',
-                'answers': ['HTML', 'Python', 'CSS', 'JavaScript'],
-                'correct': 1
-            },
-            {
-                'question': 'What does an API do in backend development?',
-                'answers': ['Serves frontend pages', 'Facilitates communication between software components', 'Handles CSS styling', 'Optimizes database queries'],
-                'correct': 1
-            },
-            {
-                'question': 'Which database is a NoSQL database?',
-                'answers': ['MySQL', 'PostgreSQL', 'MongoDB', 'SQLite'],
-                'correct': 2
-            },
-            {
-                'question': 'What is the role of middleware in backend development?',
-                'answers': ['To serve static files', 'To handle routing in a server', 'To act as a bridge between requests and server logic', 'To store session data'],
-                'correct': 2
-            },
-            {
-                'question': 'Which of the following is a framework used for backend development in Python?',
-                'answers': ['Flask', 'React', 'Vue', 'Angular'],
-                'correct': 0
-            },
-            {
-                'question': 'What is the purpose of token-based authentication?',
-                'answers': ['To manage server connections', 'To store user passwords', 'To validate and manage user sessions securely', 'To encrypt database data'],
-                'correct': 2
-            },
-            {
-                'question': 'Which HTTP method is used to submit data to a server?',
-                'answers': ['GET', 'POST', 'PUT', 'DELETE'],
-                'correct': 1
-            },
-            {
-                'question': 'What is the purpose of load balancing in backend systems?',
-                'answers': ['To cache server responses', 'To distribute incoming traffic across multiple servers', 'To monitor server logs', 'To improve database indexing'],
-                'correct': 1
-            },
-            {
-                'question': 'What is an ORM in backend development?',
-                'answers': ['Online Resource Management', 'Object-Relational Mapping', 'Optimal Routing Method', 'Object-Retrieval Mechanism'],
-                'correct': 1
-            },
-            {
-                'question': 'Which protocol is commonly used for secure communication in backend APIs?',
-                'answers': ['HTTP', 'HTTPS', 'FTP', 'SMTP'],
-                'correct': 1
-            },
-        ]
-        full_stack_web_development = [
-            {
-                'question': 'Which of the following is a popular stack for full-stack web development?',
-                'answers': ['LAMP', 'MERN', 'MEAN', 'All of the above'],
-                'correct': 3
-            },
-            {
-                'question': 'What is the purpose of the "package.json" file in a Node.js project?',
-                'answers': ['To define dependencies and project metadata', 'To store environment variables', 'To run the server', 'To compile JavaScript files'],
-                'correct': 0
-            },
-            {
-                'question': 'Which of the following tools can be used to build RESTful APIs?',
-                'answers': ['Express.js', 'Django', 'Flask', 'All of the above'],
-                'correct': 3
-            },
-            {
-                'question': 'What is a key advantage of server-side rendering (SSR)?',
-                'answers': ['Faster client-side interactions', 'Better SEO and initial load times', 'Eliminates server-side processing', 'Improves database performance'],
-                'correct': 1
-            },
-            {
-                'question': 'What is CORS in full-stack web development?',
-                'answers': ['Cross-Origin Resource Sharing', 'Client-Optimized Routing System', 'Custom Object Relational Schema', 'Clustered Operational Resource Storage'],
-                'correct': 0
-            },
-            {
-                'question': 'Which of the following is NOT a full-stack framework?',
-                'answers': ['Django', 'Ruby on Rails', 'Spring Boot', 'Bootstrap'],
-                'correct': 3
-            },
-            {
-                'question': 'What is the main purpose of a reverse proxy in a web application?',
-                'answers': ['Caching static files', 'Load balancing and securing backend services', 'Optimizing JavaScript files', 'Directly serving frontend code'],
-                'correct': 1
-            },
-            {
-                'question': 'Which of the following is NOT part of the MVC architecture?',
-                'answers': ['Model', 'View', 'Client', 'Controller'],
-                'correct': 2
-            },
-            {
-                'question': 'What is the main advantage of using GraphQL in full-stack applications?',
-                'answers': ['Strong typing', 'Reduced network overhead', 'Real-time capabilities', 'All of the above'],
-                'correct': 3
-            },
-            {
-                'question': 'What is a "monorepo" in full-stack development?',
-                'answers': ['A single repository for managing code across projects', 'A single database for all services', 'A monolithic server-side architecture', 'A single frontend framework for multiple applications'],
-                'correct': 0
-            },
-        ]
-        return JsonResponse({'status': 'success', 'data': {'machine_learning':machine_learning, 'app_development':app_development, 'frontend_development': frontend_development, 'backend_development': backend_development, 'fullstack_development': full_stack_web_development}})
+        return JsonResponse({'status': 'success', 'data': {'machine_learning':machine_learning, 'app_development':app_development}})
     return JsonResponse({'status': 'error', 'message': 'Only GET method is allowed'})
-
-
